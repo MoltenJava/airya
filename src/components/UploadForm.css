@@ -1,0 +1,9 @@
+/* UploadForm.css */
+
+.upload-container {
+    height: 100vh; /* Full viewport height */
+}
+
+h1 {
+    margin-top: 2%; /* Adjust as needed */
+}
