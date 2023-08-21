@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "apt-helix-396621",
+  "private_key_id": "42abc2aa47f9d0b047df40ab2300886ec1129c00",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCLNKb3otrkbnFN\nQJ53I2e5o5QL/LNg8rA+3l1MJdBviQumGt3Kys3+VELSX0HXCLjN+9Pac5t23P/5\nvX1mrfCzh7EtL3fRvJSxvkY3lxPxZ8spAZLDyMGWIQ3BCdNC5QCwJIWwoWRBK6ql\n92+I/yZOuhAG7qDTiGtvtAuzg/S3J4znNa/FOHFo1Jp0Q56ayQnxFAOd+PzeSQO+\nE7aKkNQ/TBK5ulAeQF9KU49mIbmZBOIIG2drDHFh5FwfBgm3sVTwREb839IPBtrB\nRffg1kOx+wxyrlJ3cs7R+sXFETYyk8KxrQFE+nGOOwmnhRWdA4vgs/rKu7Y0bVJy\n2dHuK1q5AgMBAAECggEAAdEN1cD5EM6VKXAssTrTzXMiSTbCw4LfRG7D8myy5+W2\nsnP6zXzwi79fQN4P3qXFPaDp7pmgH4C6UXDE3GxsLfeZGxEZw/GtUhV81phg4P9d\nAhu8ZdQunI4xXwHJEUAqTmInoXq1s3kFqNVODhBgWFoqv+Bo1mHbHxHPLkhMTwCO\n85Tiu44K8sgVTM1jKvczmP5YcqpOMklP9dRtBmrYqMyi1iw8Z9FGrx0MG1ULiFc3\nFabW9iN9qRSyMFbYsaR4gTv6TwE38Pl6VyFb5w0TN1DnkZyVvE4egVxw7vYF3+g5\nINZ/X7QOeOc1OWhnccgCy+wbVbcAjCfQvzuaksNB4QKBgQC9P3gyjysLt6by3vGS\njRMbrrKItVRbKx/FVyoTLYVyEZuy5QV7594eDM8ScfzbD4PoUu/TN0OEf9u/Qtcb\n0Ycnu1oebvtSc+Aj9Un0C2Bf9W2qtWY/6Oe1W3WFOvX4UHL2/ZA0ex2fd+RrF6JU\nV9fouPuWXXI+5g20ei//225WsQKBgQC8ToOzG6EKJoFd+6Js7hiKTN/QXRSfIMmI\n5F1yUhUp3HuTvyIPY3P9U3LpWKw0s+8mfz00ktXubtXe7RWzdWspVDMbUHKLq8nA\n3eJpodVLj530QWOBtxInKcJNNyGAgTEGDd+GKXGb2J93sIyEmdGXWglIkWeentve\nA1WLBdfWiQKBgQCs5SmI92eaQuTRioElJKHKbqZJY3B4AkP6ZJHaB4KdHh0jKT0D\nYGh7B7S+40jhUaFvRSY5z4ltqeo3KHehwKE72VyR5U7Sm26xK02vGh2oTW8twKBz\nzvKxq6cIWz+Q5t7BbBKs/7WmlUAn3uW9LKviv+2KCEFx2Xe35NGpbO23YQKBgQCo\nx6LpxajpBSxNBb9G7X3XcCHni5ZxLp0U8sMDNak8dR/ahKVNr7GF7OcBWfY34tNG\n6SL93WKcrIFLp6scx/C+AXcxU0DoCZjzIq3OSjx41ogYJwe+e01tBtPeC70ehi1f\npM2lXb4zls0QJZE9RPWEODI79gAvP2oIq2pgCmO0KQKBgEIyCQorIi3iwpfoX76l\nl4jU/3gvb01AoXK2ELf/7t8lXPyednbu7QDvDTklLetIxLtgJKCh3WG/Y58n93nS\nUeyBCZ3F7xVMz5/w0MNiq59qS5rMctEMmjIX7E58eqWg+ncp8bYESBl9bT7HYX4y\nXqnlQQW7iDvZkW8deFRf7uMx\n-----END PRIVATE KEY-----\n",
+  "client_email": "arya-s-laptop@apt-helix-396621.iam.gserviceaccount.com",
+  "client_id": "101994616312097445333",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/arya-s-laptop%40apt-helix-396621.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
