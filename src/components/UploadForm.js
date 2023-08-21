@@ -1,49 +1,75 @@
-import React from 'react';
-import { Button, Form } from 'react-bootstrap';
-import './UploadForm.css'; // Assuming you have a stylesheet named UploadForm.css in the same directory
+import React, { useState } from 'react';
 
-const UploadForm = () => {
-  return (
-    <div className="upload-container d-flex justify-content-center align-items-center">
-      <div>
-        <h1 className="text-center mb-4">AiRYA Upload Form</h1> 
-        <Form>
-          <Form.Group controlId="songTitle">
-            <Form.Label>Song Title</Form.Label>
-            <Form.Control type="text" placeholder="Enter song title" />
-          </Form.Group>
-        <Form.Group controlId="releaseDate">
-            <Form.Label>Release Date</Form.Label>
-            <Form.Control type="date" />
-        </Form.Group>
-        <Form.Group controlId="formFileSm" className="mb-3">
-            <Form.Label>Label Copy PDF</Form.Label>
-            <Form.Control type="file" size="sm" />
-        <Form.Group controlId="labelCopyText" className="mb-3">
-            <Form.Label>Or Paste Label Copy Text</Form.Label>
-            <Form.Control as="textarea" rows={3} placeholder="Optional label copy paste here..." />
-        </Form.Group>
-        <Form.Group controlId="formAudioUpload" className="mb-3">
-            <Form.Label>Upload Audio File</Form.Label>
-            <Form.Control type="file" size="sm" accept="audio/*" />
-        </Form.Group>
-        <Form.Group controlId="formArtwork" className="mb-3">
-            <Form.Label>Artwork Upload</Form.Label>
-            <Form.Control type="file" size="sm" placeholder="Upload your artwork here." />
-        </Form.Group>
-        <Form.Group controlId="formReleaseInstructions" className="mb-3">
-            <Form.Label>Release Instructions (optional)</Form.Label>
-            <Form.Control as="textarea" rows={3} placeholder="Enter any special release requests or other instructions here." />
-        </Form.Group>
-        </Form.Group>
-          {/* ... Continue defining other form fields ... */}
-          <Button variant="primary" type="submit">
-            Submit
-          </Button>
-        </Form>
-      </div>
-    </div>
-  );
+function UploadForm() {
+    const [songTitle, setSongTitle] = useState('');
+    const [releaseDate, setReleaseDate] = useState('');
+    const [labelCopyText, setLabelCopyText] = useState('');
+    const [releaseInstructions, setReleaseInstructions] = useState('');
+    const [audioFile, setAudioFile] = useState(null);
+    const [labelCopyPDF, setLabelCopyPDF] = useState(null);
+    const [artwork, setArtwork] = useState(null);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData();
+        formData.append('songTitle', songTitle);
+        formData.append('releaseDate', releaseDate);
+        formData.append('labelCopyText', labelCopyText);
+        formData.append('releaseInstructions', releaseInstructions);
+        formData.append('audioFile', audioFile);
+        formData.append('labelCopyPDF', labelCopyPDF);
+        formData.append('artwork', artwork);
+
+        try {
+            const response = await fetch('http://localhost:5001/api/endpoint', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            alert(result.message);
+        } catch (error) {
+            alert('There was an error uploading your data.');
+        }
+    };
+
+    return (
+        <div>
+            <form onSubmit={handleSubmit}>
+                <div>
+                    <label>Song Title:</label>
+                    <input type="text" value={songTitle} onChange={(e) => setSongTitle(e.target.value)} />
+                </div>
+                <div>
+                    <label>Release Date:</label>
+                    <input type="date" value={releaseDate} onChange={(e) => setReleaseDate(e.target.value)} />
+                </div>
+                <div>
+                    <label>Label Copy Text:</label>
+                    <textarea value={labelCopyText} onChange={(e) => setLabelCopyText(e.target.value)}></textarea>
+                </div>
+                <div>
+                    <label>Release Instructions:</label>
+                    <textarea value={releaseInstructions} onChange={(e) => setReleaseInstructions(e.target.value)}></textarea>
+                </div>
+                <div>
+                    <label>Audio File:</label>
+                    <input type="file" onChange={(e) => setAudioFile(e.target.files[0])} />
+                </div>
+                <div>
+                    <label>Label Copy PDF:</label>
+                    <input type="file" onChange={(e) => setLabelCopyPDF(e.target.files[0])} />
+                </div>
+                <div>
+                    <label>Artwork:</label>
+                    <input type="file" onChange={(e) => setArtwork(e.target.files[0])} />
+                </div>
+                <div>
+                    <button type="submit">Submit</button>
+                </div>
+            </form>
+        </div>
+    );
 }
 
 export default UploadForm;
