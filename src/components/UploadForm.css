@@ -1,9 +1,12 @@
-/* UploadForm.css */
-
-.upload-container {
-    height: 100vh; /* Full viewport height */
+.upload-form {
+    margin: 20px auto;
+    width: 70%;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
 }
 
-h1 {
-    margin-top: 2%; /* Adjust as needed */
+.submit-button-group {
+    text-align: center;
 }
