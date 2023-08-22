@@ -9,16 +9,22 @@ app = Flask(__name__)
 CORS(app)
 
 # Get the Google Credentials from the Environment Variable
-google_credentials = os.environ.get("GOOGLE_CREDENTIALS")
-creds_info = json.loads(google_credentials) if google_credentials else None
+creds_info = None
+if 'GOOGLE_CREDENTIALS' in os.environ:
+    creds_info = json.loads(os.environ['GOOGLE_CREDENTIALS'])
 
 # Initialize GCS client
-storage_client = storage.Client.from_service_account_info(creds_info) if creds_info else None
-BUCKET_NAME = "airya_bucket"
-bucket = storage_client.bucket(BUCKET_NAME) if storage_client else None
+storage_client = None
+bucket = None
+if creds_info:
+    storage_client = storage.Client.from_service_account_info(creds_info)
+    bucket = storage_client.bucket("airya_bucket")
 
 
 def upload_to_gcs(file_obj, folder_name):
+    if not bucket:
+        print("Error: Google Cloud Storage bucket is not initialized.")
+        return
     unique_filename = f"{uuid.uuid4().hex}_{file_obj.filename}"
     blob = bucket.blob(f"{folder_name}/{unique_filename}")
     blob.upload_from_file(file_obj)
