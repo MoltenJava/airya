@@ -11,7 +11,7 @@ CORS(app)
 
 # Initialize GCS client
 storage_client = storage.Client()
-BUCKET_NAME = "your_bucket_name"
+BUCKET_NAME = "airya_bucket"
 bucket = storage_client.bucket(BUCKET_NAME)
 
 def upload_to_gcs(file_obj, folder_name):
@@ -25,12 +25,15 @@ def handle_submission():
     try:
         if 'audioFile' in request.files:
             audio_file = request.files['audioFile']
+            print("Handling Audio...")
             upload_to_gcs(audio_file, "audio")
         if 'labelCopyPDF' in request.files:
             label_copy_pdf = request.files['labelCopyPDF']
+            print("Handling PDF...")
             upload_to_gcs(label_copy_pdf, "pdf")
         if 'artwork' in request.files:
             artwork_file = request.files['artwork']
+            print("Handling Artwork...")
             upload_to_gcs(artwork_file, "artwork")
         # After processing the data:
         return jsonify({"message": "Data received successfully!"})
