@@ -106,7 +106,9 @@ def handle_submission():
         return jsonify({"message": f"Error: {str(e)}"}), 400
 
 with app.app_context():
-    db.create_all()
+    tables = db.engine.table_names()
+    if not tables or 'song' not in tables:
+        db.create_all()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
