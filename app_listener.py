@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.utils import secure_filename
 from google.cloud import storage
 import os
 import json
@@ -52,27 +53,28 @@ def upload_to_gcs(file_obj, folder_name):
     if not bucket:
         print("Error: Google Cloud Storage bucket is not initialized.")
         return
-    unique_filename = f"{uuid.uuid4().hex}_{file_obj.filename}"
+    safe_filename = secure_filename(file_obj.filename)
+    unique_filename = f"{uuid.uuid4().hex}_{safe_filename}"
     blob = bucket.blob(f"{folder_name}/{unique_filename}")
     blob.upload_from_file(file_obj)
-    print(f"File {file_obj.filename} uploaded to {unique_filename}.")
+    print(f"File {safe_filename} uploaded to {unique_filename}.")
 
 @app.route('/api/endpoint', methods=['POST'])
 def handle_submission():
     try:
-        # Handling files
-        if 'audioFile' in request.files:
-            audio_file = request.files['audioFile']
-            print("Handling Audio...")
-            upload_to_gcs(audio_file, "audio")
-        if 'labelCopyPDF' in request.files:
-            label_copy_pdf = request.files['labelCopyPDF']
-            print("Handling PDF...")
-            upload_to_gcs(label_copy_pdf, "pdf")
-        if 'artwork' in request.files:
-            artwork_file = request.files['artwork']
-            print("Handling Artwork...")
-            upload_to_gcs(artwork_file, "artwork")
+        file_mappings = {
+            'audioFile': 'audio',
+            'labelCopyPDF': 'pdf',
+            'artwork': 'artwork',
+            'dolbyAudio': 'dolby'
+        }
+
+        for field, folder in file_mappings.items():
+            if field in request.files:
+                for uploaded_file in request.files.getlist(field):  # This helps in case of multiple files like audio
+                    print(f"Handling {field}...")
+                    upload_to_gcs(uploaded_file, folder)
+
 
         # Store song metadata in the database
         song_title = request.form.get('songTitle')
