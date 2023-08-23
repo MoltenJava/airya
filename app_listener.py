@@ -7,6 +7,7 @@ import os
 import json
 import uuid
 from sqlalchemy import MetaData
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
@@ -66,6 +67,7 @@ def upload_to_gcs(file_obj, folder_name):
 
 @app.route('/api/endpoint', methods=['POST'])
 def handle_submission():
+    print(request.files.keys())
     try:
         file_mappings = {
             'audioFile': 'audio',
@@ -84,7 +86,7 @@ def handle_submission():
         # Store song metadata in the database
         song_title = request.form.get('songTitle')
         artist_name = request.form.get('artistName')
-        release_date = request.form.get('releaseDate')
+        release_date = datetime.strptime(request.form.get('releaseDate'), '%Y-%m-%d').date()
         genre = request.form.get('genre')
         sub_genre = request.form.get('subGenre')
         song_type = request.form.get('songType')
@@ -107,9 +109,7 @@ def handle_submission():
         return jsonify({"message": f"Error: {str(e)}"}), 400
 
 with app.app_context():
-    metadata = MetaData()
-    metadata.reflect(bind=db.engine)
-    tables = metadata.tables.keys()
+    db.create_all()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
