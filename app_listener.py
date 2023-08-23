@@ -6,6 +6,7 @@ from google.cloud import storage
 import os
 import json
 import uuid
+from sqlalchemy import MetaData
 
 app = Flask(__name__)
 CORS(app)
@@ -106,9 +107,9 @@ def handle_submission():
         return jsonify({"message": f"Error: {str(e)}"}), 400
 
 with app.app_context():
-    tables = db.engine.table_names()
-    if not tables or 'song' not in tables:
-        db.create_all()
+    metadata = MetaData()
+    metadata.reflect(bind=db.engine)
+    tables = metadata.tables.keys()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
