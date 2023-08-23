@@ -101,8 +101,7 @@ def handle_submission():
         print(str(e))
         return jsonify({"message": f"Error: {str(e)}"}), 400
 
-@app.before_first_request
-def create_tables():
+with app.app_context():
     db.create_all()
 
 if __name__ == '__main__':

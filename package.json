@@ -23,8 +23,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
-  "proxy": "https://airya-shapouri-b8dd7e538492.herokuapp.com",
-  
+  "proxy": "https://airya-shapouri-b8dd7e538492.herokuapp.com", 
   "eslintConfig": {
     "extends": [
       "react-app",
