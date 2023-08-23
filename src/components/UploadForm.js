@@ -18,6 +18,7 @@ const UploadForm = () => {
     const [releaseInstructions, setReleaseInstructions] = useState('');
     const [artistName, setartistName] = useState('');
     const [dolbyFileKey, setDolbyFileKey] = useState(0);
+    const [algorithmSupportAcknowledged, setAlgorithmSupportAcknowledged] = useState(false);
 
 
     // New state declarations for album functionality
@@ -123,6 +124,15 @@ const UploadForm = () => {
                     <Form.Label>Release Date</Form.Label>
                     <Form.Control type="date" value={releaseDate} onChange={e => setReleaseDate(e.target.value)} required />
                 </Form.Group>
+                {new Date(releaseDate) - new Date() <= 10 * 24 * 60 * 60 * 1000 && (
+    <Form.Group>
+        <Form.Check 
+            type="checkbox" 
+            label="I understand I will lose algorithm support because my release is under 10 days." 
+            onChange={e => setAlgorithmSupportAcknowledged(e.target.checked)} 
+            required />
+    </Form.Group>
+)}
                 <Form.Group>
                     <Form.Control as="textarea" placeholder="Label Copy Text" value={labelCopyText} onChange={e => setLabelCopyText(e.target.value)} />
                 </Form.Group>
