@@ -16,6 +16,7 @@ const UploadForm = () => {
     const [success, setSuccess] = useState(false);
     const [validated, setValidated] = useState(false);
     const [releaseInstructions, setReleaseInstructions] = useState('');
+    const [artistName, setartistName] = useState('');
 
     const removeFile = (setterFunction) => {
         setterFunction(null);
@@ -51,6 +52,7 @@ const UploadForm = () => {
         formData.append('releaseDate', releaseDate);
         formData.append('labelCopyText', labelCopyText);
         formData.append('releaseInstructions', releaseInstructions);
+        formData.append('artistName', artistName);
 
         try {
             // Send data to backend
@@ -85,6 +87,9 @@ const UploadForm = () => {
             <Form noValidate validated={validated} onSubmit={handleFormSubmit}>
                 <Form.Group>
                     <Form.Control type="text" placeholder="Song Title" value={songTitle} onChange={e => setSongTitle(e.target.value)} required />
+                </Form.Group>
+                <Form.Group>
+                    <Form.Control type="text" placeholder="Artist Name" value={songTitle} onChange={e => setartistName(e.target.value)} required />
                 </Form.Group>
                 <Form.Group>
                     <Form.Label>Release Date</Form.Label>
