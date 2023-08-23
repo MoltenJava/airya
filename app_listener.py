@@ -20,7 +20,6 @@ if creds_info:
     storage_client = storage.Client.from_service_account_info(creds_info)
     bucket = storage_client.bucket("airya_bucket")
 
-
 def upload_to_gcs(file_obj, folder_name):
     if not bucket:
         print("Error: Google Cloud Storage bucket is not initialized.")
@@ -33,19 +32,31 @@ def upload_to_gcs(file_obj, folder_name):
 @app.route('/api/endpoint', methods=['POST'])
 def handle_submission():
     try:
+        # Handle Audio File
         if 'audioFile' in request.files:
             audio_file = request.files['audioFile']
             print("Handling Audio...")
             upload_to_gcs(audio_file, "audio")
+        
+        # Handle Dolby Audio File (if present)
+        if 'dolbyAudio' in request.files:
+            dolby_audio_file = request.files['dolbyAudio']
+            print("Handling Dolby Audio...")
+            upload_to_gcs(dolby_audio_file, "dolby_audio")
+        
+        # Handle Label Copy PDF
         if 'labelCopyPDF' in request.files:
             label_copy_pdf = request.files['labelCopyPDF']
             print("Handling PDF...")
             upload_to_gcs(label_copy_pdf, "pdf")
+        
+        # Handle Artwork File
         if 'artwork' in request.files:
             artwork_file = request.files['artwork']
             print("Handling Artwork...")
             upload_to_gcs(artwork_file, "artwork")
-        # After processing the data:
+        
+        # After processing the data, send a success response
         return jsonify({"message": "Data received successfully!"})
     except Exception as e:
         print(str(e))
