@@ -10,6 +10,8 @@ from sqlalchemy import MetaData
 from datetime import datetime
 from flask_migrate import Migrate
 import logging
+from google.cloud.storage.blob import Blob
+
 
 # Setup logging
 logging.basicConfig(level=logging.DEBUG)
@@ -70,6 +72,49 @@ def upload_to_gcs(file_obj, folder_name):
     blob.upload_from_file(file_obj)
     logging.info(f"File {safe_filename} uploaded to {unique_filename}.")
     return unique_filename  # Return the URL to the uploaded file
+
+def generate_gcs_signed_url(file_reference, expiry_time=3600):
+    """
+    Generate a signed URL for Google Cloud Storage object.
+    """
+    if not bucket:
+        logging.error("Google Cloud Storage bucket is not initialized.")
+        return None
+    blob = Blob(file_reference, bucket)
+    url = blob.generate_signed_url(expiration=expiry_time, method='GET')
+    return url
+
+@app.route('/api/projects', methods=['GET'])
+def get_all_projects():
+    projects = Release.query.all()
+    response = [
+        {
+            "id": project.id,
+            "title": project.song_title,
+            "artist_name": project.artist_name
+        }
+        for project in projects
+    ]
+    return jsonify(response)
+
+@app.route('/api/projects/<int:project_id>', methods=['GET'])
+def get_project_details(project_id):
+    project = Release.query.get(project_id)
+    if not project:
+        return jsonify({"error": "Project not found"}), 404
+
+    files = File.query.filter_by(release_id=project.id).all()
+    file_data = {file.file_type: generate_gcs_signed_url(file.file_reference) for file in files}
+    
+    response = {
+        "title": project.song_title,
+        "artist_name": project.artist_name,
+        "release_date": project.release_date.strftime('%Y-%m-%d'),
+        "label_copy_text": project.label_copy_text,
+        "release_instructions": project.release_instructions,
+        "files": file_data
+    }
+    return jsonify(response)
 
 @app.route('/api/endpoint', methods=['POST'])
 def handle_submission():
