@@ -8,6 +8,7 @@ import json
 import uuid
 from sqlalchemy import MetaData
 from datetime import datetime
+from flask_migrate import Migrate
 
 app = Flask(__name__)
 CORS(app)
@@ -22,6 +23,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initializing database with Flask app
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 # Database models
 class Song(db.Model):

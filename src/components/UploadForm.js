@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import { Form, Button, Alert, Spinner, Container, Modal } from 'react-bootstrap';
 
 const UploadForm = () => {
+    const [audioFileKey, setAudioFileKey] = useState(Math.random().toString(36).substr(2, 9));
+    const [artworkFileKey, setArtworkFileKey] = useState(Math.random().toString(36).substr(2, 9));
+    const [pdfFileKey, setPdfFileKey] = useState(Math.random().toString(36).substr(2, 9));
+
     const [fileKey, setFileKey] = useState(Math.random().toString(36).substr(2, 9));
     const [songTitle, setSongTitle] = useState('');
     const [releaseDate, setReleaseDate] = useState('');
@@ -26,9 +30,9 @@ const UploadForm = () => {
     const [albumOrder, setAlbumOrder] = useState('');
     const [showModal, setShowModal] = useState(false);
 
-    const removeFile = (setterFunction) => {
+    const removeFile = (setterFunction, resetKeyFunction) => {
         setterFunction(null);
-        setFileKey(Math.random().toString(36).substr(2, 9)); // Refresh key to reset the input field
+        resetKeyFunction(Math.random().toString(36).substr(2, 9));
     };
 
     // Enhanced handler for file selection
@@ -70,8 +74,9 @@ const UploadForm = () => {
             }
             formData.append('albumOrder', albumOrder);
         } else {
-            formData.append('audioFile', audioFile);
+            formData.append('audioFile', audioFile[0]);
         }
+        
         formData.append('artwork', artwork);
         formData.append('labelCopyPDF', labelCopyPDF);
         if (dolbyAudio) {
@@ -82,9 +87,7 @@ const UploadForm = () => {
         formData.append('labelCopyText', labelCopyText);
         formData.append('releaseInstructions', releaseInstructions);
         formData.append('artistName', artistName);
-
         try {
-            // Send data to backend
             const response = await fetch('/api/endpoint', {
                 method: 'POST',
                 body: formData,
@@ -96,7 +99,6 @@ const UploadForm = () => {
                 throw new Error(responseData.message);
             }
 
-            // Handle the success case
             console.log(responseData.message);
             setLoading(false);
             setSuccess(true);
@@ -106,9 +108,6 @@ const UploadForm = () => {
             setSuccess(false);
             alert("There was an error uploading the data.");
         }
-
-        setLoading(false);
-        setSuccess(true);
     };
 
     return (
@@ -118,7 +117,7 @@ const UploadForm = () => {
                     <Form.Control type="text" placeholder="Project Title" value={songTitle} onChange={e => setSongTitle(e.target.value)} required />
                 </Form.Group>
                 <Form.Group>
-                    <Form.Control type="text" placeholder="Artist Name" value={songTitle} onChange={e => setartistName(e.target.value)} required />
+                    <Form.Control type="text" placeholder="Artist Name" value={artistName} onChange={e => setartistName(e.target.value)} required />
                 </Form.Group>
                 <Form.Group>
                     <Form.Label>Release Date</Form.Label>
@@ -139,7 +138,7 @@ const UploadForm = () => {
 
                 <Form.Group>
                 <Form.Label>{isAlbum ? 'Album (WAVs)' : 'Audio File (WAV)'}</Form.Label>
-                <Form.Control type="file" accept=".wav" key={fileKey} onChange={handleFileSelect} multiple required />
+                <Form.Control type="file" accept=".wav" key={audioFileKey} onChange={handleFileSelect} multiple required />
                 {Array.isArray(audioFile) && audioFile.map((file, index) => (
                     <div key={index}>
                         <span>{file.name}</span>
@@ -172,14 +171,14 @@ const UploadForm = () => {
 
                 <Form.Group>
                     <Form.Label>Artwork (TIFF)</Form.Label>
-                    <Form.Control type="file" accept=".tif, .tiff" key={fileKey} onChange={e => setArtwork(e.target.files[0])} required />
-                    {artwork && <Button variant="danger" size="sm" onClick={() => removeFile(setArtwork)}>Remove</Button>}
+                    <Form.Control type="file" accept=".tif, .tiff" key={artworkFileKey} onChange={e => setArtwork(e.target.files[0])} required />
+                    {artwork && <Button variant="danger" size="sm" onClick={() => removeFile(setArtwork, setArtworkFileKey)}>Remove</Button>}
                 </Form.Group>
 
                 <Form.Group>
                     <Form.Label>Label Copy PDF</Form.Label>
-                    <Form.Control type="file" accept=".pdf" key={fileKey} onChange={e => setLabelCopyPDF(e.target.files[0])} required={!labelCopyText} />
-                    {labelCopyPDF && <Button variant="danger" size="sm" onClick={() => removeFile(setLabelCopyPDF)}>Remove</Button>}
+                    <Form.Control type="file" accept=".pdf" key={pdfFileKey} onChange={e => setLabelCopyPDF(e.target.files[0])} required={!labelCopyText} />
+                    {labelCopyPDF && <Button variant="danger" size="sm" onClick={() => removeFile(setLabelCopyPDF, setPdfFileKey)}>Remove</Button>}
                 </Form.Group>
 
                 <Form.Group>
