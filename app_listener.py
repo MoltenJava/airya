@@ -40,7 +40,6 @@ class Release(db.Model):
     label_copy_text = db.Column(db.Text, nullable=True)  # Label Copy Text
     release_instructions = db.Column(db.Text, nullable=True)  # Release Instructions
     is_album = db.Column(db.Boolean, default=False)  # Is Album
-    album_order = db.Column(db.Integer, nullable=True)  # Album Order
     algo_support_acknowledged = db.Column(db.Boolean, default=False)  # Algorithm Support Acknowledged
     rush_fee_approved = db.Column(db.Boolean, default=False)  # Rush Fee Approved
 

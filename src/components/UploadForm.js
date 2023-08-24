@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Form, Button, Alert, Spinner, Container, Modal } from 'react-bootstrap';
+import { Form, Button, Alert, Spinner, Container } from 'react-bootstrap';
 
 const UploadForm = () => {
     const [audioFileKey, setAudioFileKey] = useState(Math.random().toString(36).substr(2, 9));
@@ -27,8 +27,6 @@ const UploadForm = () => {
 
     // New state declarations for album functionality
     const [isAlbum, setIsAlbum] = useState(false);
-    const [albumOrder, setAlbumOrder] = useState('');
-    const [showModal, setShowModal] = useState(false);
 
     const removeFile = (setterFunction, resetKeyFunction) => {
         setterFunction(null);
@@ -40,7 +38,6 @@ const UploadForm = () => {
         const files = Array.from(event.target.files);
         if (files.length > 1) {
             setIsAlbum(true);
-            setShowModal(true);
         } else {
             setIsAlbum(false);
             setShowDolbyOption(true);
@@ -72,7 +69,6 @@ const UploadForm = () => {
             for (let i = 0; i < audioFile.length; i++) {
                 formData.append('audioFile', audioFile[i]);
             }
-            formData.append('albumOrder', albumOrder);
         } else {
             formData.append('audioFile', audioFile[0]);
         }
@@ -196,22 +192,6 @@ const UploadForm = () => {
                 </Button>
                 {success && <Alert variant="success" className="mt-3">Files successfully uploaded!</Alert>}
             </Form>
-
-            <Modal show={showModal} onHide={() => setShowModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Album Song Order</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form.Group>
-                        <Form.Label>Type out the order and name of each song in the album:</Form.Label>
-                        <Form.Control as="textarea" rows={5} value={albumOrder} onChange={e => setAlbumOrder(e.target.value)} required />
-                    </Form.Group>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowModal(false)}>Close</Button>
-                    <Button variant="primary" onClick={() => { setShowModal(false); }}>Save</Button>
-                </Modal.Footer>
-            </Modal>
         </Container>
     );
 };
