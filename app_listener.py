@@ -157,35 +157,8 @@ def get_signed_url():
 @app.route('/api/endpoint', methods=['POST'])
 def handle_submission():
     logging.info("Handling submission endpoint.")
-    file_urls = {}  # Initialize a dictionary to store URLs of the uploaded files
 
     try:
-        # Base mappings
-        file_mappings = {
-            'labelCopyPDFUrl': 'pdf/',
-            'artworkUrl': 'artwork/'
-        }
-
-        # Dynamically search for audio and dolbyAudio file fields with numbered suffixes
-        i = 0
-        while f'audioUrl_{i}' in request.files:
-            file_mappings[f'audioUrl_{i}'] = 'audio/'
-            i += 1
-
-        i = 0
-        while f'dolbyAudioUrl_{i}' in request.files:
-            file_mappings[f'dolbyAudioUrl_{i}'] = 'dolby/'
-            i += 1
-
-        for field, folder in file_mappings.items():
-            if field in request.files:
-                for uploaded_file in request.files.getlist(field):
-                    logging.debug(f"Handling {field}...")
-                    file_info = f"Filename: {uploaded_file.filename}, Content-Type: {uploaded_file.content_type}"
-                    logging.debug(file_info)
-                    if url:
-                        file_urls[field] = url
-
         # Store song metadata in the database
         song_title = request.form.get('songTitle')
         artist_name = request.form.get('artistName')
@@ -201,9 +174,6 @@ def handle_submission():
         rush_fee_approved_raw = request.form.get('rushFeeApproved')
         rush_fee_approved = rush_fee_approved_raw.lower() == 'true' if rush_fee_approved_raw else False
 
-
-
-
         release = Release(
             song_title=song_title,
             artist_name=artist_name,
@@ -217,9 +187,11 @@ def handle_submission():
         db.session.add(release)
         db.session.commit()
 
-        for field_type, url in file_urls.items():
-            file_entry = File(release_id=release.id, file_type=field_type, file_reference=url)
-            db.session.add(file_entry)
+        # This assumes that the client sends back the GCS file paths after uploading using the signed URLs
+        for field_type in ['labelCopyPDFUrl', 'artworkUrl', 'audioUrl_0', 'dolbyAudioUrl_0']:  # Add more if needed
+            if gcs_path := request.form.get(field_type):
+                file_entry = File(release_id=release.id, file_type=field_type, gcs_path=gcs_path)
+                db.session.add(file_entry)
         db.session.commit()
 
         logging.info("Submission endpoint processed successfully.")
@@ -228,6 +200,7 @@ def handle_submission():
     except Exception as e:
         logging.error(f"Unexpected error in handle_submission: {str(e)}")
         return jsonify({"message": f"Error: {str(e)}"}), 400
+
     
 
     
