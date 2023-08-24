@@ -104,11 +104,17 @@ const UploadForm = () => {
             throw new Error("Failed to upload artwork to GCS");
         }
 
-        const labelCopyPDFSignedUrl = await getSignedUrl(labelCopyPDF.name, labelCopyPDF.type);
-        const labelCopyPDFUploaded = await uploadToGCS(labelCopyPDFSignedUrl, labelCopyPDF);
-        if (!labelCopyPDFUploaded) {
-            throw new Error("Failed to upload label copy PDF to GCS");
-        }
+        let labelCopyPDFSignedUrl;
+            if (labelCopyPDF) {
+                labelCopyPDFSignedUrl = await getSignedUrl(labelCopyPDF.name, labelCopyPDF.type);
+                const labelCopyPDFUploaded = await uploadToGCS(labelCopyPDFSignedUrl, labelCopyPDF);
+                if (!labelCopyPDFUploaded) {
+                    throw new Error("Failed to upload label copy PDF to GCS");
+                }
+            } else if (!labelCopyText) {
+                throw new Error("Either labelCopyPDF or labelCopyText must be provided");
+            }
+
 
         let dolbyAudioUrls = [];
         if (dolbyAudio && Array.isArray(dolbyAudio)) {
@@ -128,7 +134,9 @@ const UploadForm = () => {
             formData.append(`audioUrl_${index}`, url);
         });
         formData.append('artworkUrl', artworkSignedUrl.split('?')[0]);
-        formData.append('labelCopyPDFUrl', labelCopyPDFSignedUrl.split('?')[0]);
+        if (labelCopyPDFSignedUrl) {
+            formData.append('labelCopyPDFUrl', labelCopyPDFSignedUrl.split('?')[0]);
+        }
         dolbyAudioUrls.forEach((url, index) => {
             formData.append(`dolbyAudioUrl_${index}`, url);
         });

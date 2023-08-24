@@ -172,10 +172,10 @@ def handle_submission():
     
     try:
         file_mappings = {
-            'audioFile': 'audio',
-            'labelCopyPDF': 'pdf',
-            'artwork': 'artwork',
-            'dolbyAudio': 'dolby'
+            'audioFile': 'audio/',
+            'labelCopyPDF': 'pdf/',
+            'artwork': 'artwork/',
+            'dolbyAudio': 'dolby/'
         }
 
         for field, folder in file_mappings.items():
