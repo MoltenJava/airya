@@ -153,8 +153,6 @@ def handle_submission():
         rush_fee_approved_raw = request.form.get('rushFeeApproved')
         rush_fee_approved = rush_fee_approved_raw.lower() == 'true' if rush_fee_approved_raw else False
 
-        
-
 
         release = Release(
             song_title=song_title,
@@ -163,7 +161,6 @@ def handle_submission():
             label_copy_text=label_copy_text,
             release_instructions=release_instructions,
             is_album=is_album,
-            album_order=album_order,
             algo_support_acknowledged=algo_support_acknowledged,
             rush_fee_approved=rush_fee_approved
         )
