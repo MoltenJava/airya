@@ -32,9 +32,9 @@ const UploadForm = () => {
         return 'unknown';
     }
 
-    const getSignedUrl = async (file_reference, contentType) => {
-        const fileType = determineFileType(file_reference);
-        const response = await fetch(`/api/get-signed-url?file_reference=${file_reference}&contentType=${contentType}&file_type=${fileType}`);
+    const getSignedUrl = async (gcs_path, contentType) => {
+        const fileType = determineFileType(gcs_path);
+        const response = await fetch(`/api/get-signed-url?gcs_path=${gcs_path}&contentType=${contentType}&file_type=${fileType}`);
         const data = await response.json();
         // Check if the response contains an error
         if (data.error) {

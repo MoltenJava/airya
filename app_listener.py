@@ -52,7 +52,6 @@ class File(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     release_id = db.Column(db.Integer, db.ForeignKey('release.id'), nullable=False)
     file_type = db.Column(db.String(50), nullable=False)
-    file_reference = db.Column(db.String(500), nullable=False)
     gcs_path = db.Column(db.String(500), nullable=False) 
 
 # Get the Google Credentials from the Environment Variable
@@ -128,7 +127,7 @@ def get_project_details(project_id):
     file_data = [
     {
         "file_type": file.file_type,
-        "url": generate_gcs_signed_url(file.file_reference)
+        "url": generate_gcs_signed_url(file.gcs_path)
     }
     for file in files
 ]
