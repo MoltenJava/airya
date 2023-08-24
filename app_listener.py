@@ -13,7 +13,7 @@ import logging
 import io
 from google.cloud.storage.blob import Blob
 import time
-
+import shortuuid
 
 # Setup logging
 logging.basicConfig(level=logging.DEBUG)
@@ -65,49 +65,38 @@ if creds_info:
     storage_client = storage.Client.from_service_account_info(creds_info)
     bucket = storage_client.bucket("airya_bucket")
 
-def upload_to_gcs(file_obj, folder_name):
-    logging.debug("Entering upload_to_gcs function.")
-    if not bucket:
-        logging.error("Google Cloud Storage bucket is not initialized.")
-        return None  # Return None if the bucket is not initialized
-    
-    # Check if file_obj is the correct type
-    if not isinstance(file_obj, io.IOBase):
-        logging.error(f"Provided file object is not a file: {type(file_obj)}")
-        return None
 
-    safe_filename = secure_filename(file_obj.filename)
-    
-    # Check if the secured filename is not empty or None
-    if not safe_filename:
-        logging.error(f"Secured filename is empty or None for original filename: {file_obj.filename}")
-        return None
-
-    unique_filename = f"{uuid.uuid4().hex}_{safe_filename}"
-    blob_path = f"{folder_name}/{unique_filename}"
-    logging.debug(f"Constructed blob path: {blob_path}")
-
-    blob = bucket.blob(blob_path)
-    blob.upload_from_file(file_obj)
-
-    logging.info(f"File {safe_filename} uploaded to {blob_path}.")
-    return blob_path
-
-def generate_gcs_signed_url(file_reference, expiry_time=3600):
-    logging.debug(f"Generating signed URL for: {file_reference}")
+def generate_gcs_signed_url(file_type, expiry_time=3600):
+    logging.debug(f"Generating signed URL for file type: {file_type}")
     
     if not bucket:
         logging.error("Google Cloud Storage bucket is not initialized.")
         return None
+
+    # Define folder structure and expected file extensions mapping
+    folder_mapping = {
+        'labelCopyPDFUrl': {'folder': 'pdf', 'extension': '.pdf'},
+        'artworkUrl': {'folder': 'artwork', 'extension': '.tif'},
+        'audioUrl': {'folder': 'audio', 'extension': '.wav'},
+        'dolbyAudioUrl': {'folder': 'dolby', 'extension': '.wav'}
+    }
     
-    blob = Blob(file_reference, bucket)
+    file_info = folder_mapping.get(file_type)
+    if not file_info:
+        logging.error(f"Invalid file type provided: {file_type}")
+        return None
+
+    # Generate a unique filename with short UUID and the appropriate file extension
+    unique_filename = f"{shortuuid.uuid()}{file_info['extension']}"
+    blob_path = f"{file_info['folder']}/{unique_filename}"
+    blob = Blob(blob_path, bucket)
 
     try:
         signed_url = blob.generate_signed_url(version="v4", expiration=expiry_time, method="PUT")
         logging.debug(f"Generated signed URL: {signed_url}")
         return signed_url
     except Exception as e:
-        logging.error(f"Error generating signed URL for {file_reference}: {str(e)}")
+        logging.error(f"Error generating signed URL for {blob_path}: {str(e)}")
         return None
 
 
@@ -149,12 +138,12 @@ def get_project_details(project_id):
 @app.route('/api/get-signed-url', methods=['GET'])
 def get_signed_url():
     try:
-        # Get the file_reference from the request's query parameters
-        file_reference = request.args.get('file_reference')
-        if not file_reference:
-            return jsonify({"error": "file_reference parameter is required"}), 400
+        # Get the file_type from the request's query parameters
+        file_type = request.args.get('file_type')
+        if not file_type:
+            return jsonify({"error": "file_type parameter is required"}), 400
         
-        url = generate_gcs_signed_url(file_reference)
+        url = generate_gcs_signed_url(file_type)
         if not url:
             return jsonify({"error": "Unable to generate signed URL"}), 500
         
@@ -194,7 +183,6 @@ def handle_submission():
                     logging.debug(f"Handling {field}...")
                     file_info = f"Filename: {uploaded_file.filename}, Content-Type: {uploaded_file.content_type}"
                     logging.debug(file_info)
-                    url = upload_to_gcs(uploaded_file, folder)
                     if url:
                         file_urls[field] = url
 
