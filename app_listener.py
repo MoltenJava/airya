@@ -169,14 +169,24 @@ def get_signed_url():
 def handle_submission():
     logging.info("Handling submission endpoint.")
     file_urls = {}  # Initialize a dictionary to store URLs of the uploaded files
-    
+
     try:
+        # Base mappings
         file_mappings = {
-            'audioFile': 'audio/',
-            'labelCopyPDF': 'pdf/',
-            'artwork': 'artwork/',
-            'dolbyAudio': 'dolby/'
+            'labelCopyPDFUrl': 'pdf/',
+            'artworkUrl': 'artwork/'
         }
+
+        # Dynamically search for audio and dolbyAudio file fields with numbered suffixes
+        i = 0
+        while f'audioUrl_{i}' in request.files:
+            file_mappings[f'audioUrl_{i}'] = 'audio/'
+            i += 1
+
+        i = 0
+        while f'dolbyAudioUrl_{i}' in request.files:
+            file_mappings[f'dolbyAudioUrl_{i}'] = 'dolby/'
+            i += 1
 
         for field, folder in file_mappings.items():
             if field in request.files:
@@ -187,7 +197,6 @@ def handle_submission():
                     url = upload_to_gcs(uploaded_file, folder)
                     if url:
                         file_urls[field] = url
-
 
         # Store song metadata in the database
         song_title = request.form.get('songTitle')
@@ -203,6 +212,8 @@ def handle_submission():
 
         rush_fee_approved_raw = request.form.get('rushFeeApproved')
         rush_fee_approved = rush_fee_approved_raw.lower() == 'true' if rush_fee_approved_raw else False
+
+
 
 
         release = Release(

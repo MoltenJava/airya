@@ -135,8 +135,8 @@ const UploadForm = () => {
         });
         formData.append('artworkUrl', artworkSignedUrl.split('?')[0]);
         if (labelCopyPDFSignedUrl) {
-            formData.append('labelCopyPDFUrl', labelCopyPDFSignedUrl.split('?')[0]);
-        }
+    formData.append('labelCopyPDFUrl', labelCopyPDFSignedUrl.split('?')[0]);
+}
         dolbyAudioUrls.forEach((url, index) => {
             formData.append(`dolbyAudioUrl_${index}`, url);
         });
