@@ -174,6 +174,7 @@ def get_signed_url():
 @app.route('/api/endpoint', methods=['POST'])
 def handle_submission():
     logging.info("Handling submission endpoint.")
+    logging.debug(f"Raw form data received: {request.form}")
 
     def extract_gcs_path(gcs_url):
         """Utility function to extract the path part from the full GCS URL"""
@@ -212,7 +213,9 @@ def handle_submission():
         for field_type in ['labelCopyPDFUrl', 'artworkUrl']:
             if gcs_url := request.form.get(field_type):
                 gcs_path = extract_gcs_path(gcs_url)
+                logging.debug(f"Extracted GCS Path from {gcs_url}: {gcs_path}")
                 file_entry = File(release_id=release.id, file_type=field_type, gcs_path=gcs_path)
+                logging.debug(f"Storing file with GCS Path: {gcs_path}")
                 db.session.add(file_entry)
 
         # Handle multiple audio files
