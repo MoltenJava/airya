@@ -24,14 +24,20 @@ const UploadForm = () => {
     const [dolbyFileKey, setDolbyFileKey] = useState(0);
     const [algorithmSupportAcknowledged, setAlgorithmSupportAcknowledged] = useState(false);
 
-    const getSignedUrl = async (fileName, contentType) => {
-        const response = await fetch(`/api/get-signed-url?filename=${fileName}&contentType=${contentType}`);
+    const getSignedUrl = async (file_reference, contentType) => {
+        const response = await fetch(`/api/get-signed-url?file_reference=${file_reference}&contentType=${contentType}`);
         const data = await response.json();
-        return data.signedUrl;
+
+        // Check if the response contains an error
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
+        return data.signed_url; // Ensure this key matches the backend's response
     }
 
-    const uploadToGCS = async (signedUrl, file) => {
-        const response = await fetch(signedUrl, {
+    const uploadToGCS = async (signed_url, file) => {
+        const response = await fetch(signed_url, {
             method: 'PUT',
             body: file,
             headers: {
