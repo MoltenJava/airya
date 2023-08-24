@@ -9,6 +9,11 @@ import uuid
 from sqlalchemy import MetaData
 from datetime import datetime
 from flask_migrate import Migrate
+import logging
+
+# Setup logging
+logging.basicConfig(level=logging.DEBUG)
+logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 app = Flask(__name__)
 CORS(app)
@@ -25,32 +30,31 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
+
 # Database models
-class Song(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    song_title = db.Column(db.String(200), nullable=False)
-    artist_name = db.Column(db.String(200), nullable=False)
-    release_date = db.Column(db.Date, nullable=False)
-    genre = db.Column(db.String(100), nullable=True)
-    sub_genre = db.Column(db.String(100), nullable=True)
-    song_type = db.Column(db.String(50), nullable=True)
+class Release(db.Model):
+    id = db.Column(db.Integer, primary_key=True)   # Release ID
+    song_title = db.Column(db.String(200), nullable=False)  # Song Title
+    artist_name = db.Column(db.String(200), nullable=False)  # Artist Name
+    release_date = db.Column(db.Date, nullable=False)  # Release Date
+    label_copy_text = db.Column(db.Text, nullable=True)  # Label Copy Text
+    release_instructions = db.Column(db.Text, nullable=True)  # Release Instructions
+    is_album = db.Column(db.Boolean, default=False)  # Is Album
+    album_order = db.Column(db.Integer, nullable=True)  # Album Order
+    algo_support_acknowledged = db.Column(db.Boolean, default=False)  # Algorithm Support Acknowledged
+    rush_fee_approved = db.Column(db.Boolean, default=False)  # Rush Fee Approved
 
-class ISRC(db.Model):
+class File(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    isrc_code = db.Column(db.String(15), nullable=False)
-    song_id = db.Column(db.Integer, db.ForeignKey('song.id'), nullable=False)
-
-class UPC(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    upc_code = db.Column(db.String(15), nullable=False)
-    song_id = db.Column(db.Integer, db.ForeignKey('song.id'), nullable=False)
+    release_id = db.Column(db.Integer, db.ForeignKey('release.id'), nullable=False)
+    file_type = db.Column(db.String(50), nullable=False)
+    file_reference = db.Column(db.String(500), nullable=False)
 
 # Get the Google Credentials from the Environment Variable
 creds_info = None
 if 'GOOGLE_CREDENTIALS' in os.environ:
     creds_info = json.loads(os.environ['GOOGLE_CREDENTIALS'])
 
-# Initialize GCS client
 storage_client = None
 bucket = None
 if creds_info:
@@ -59,17 +63,20 @@ if creds_info:
 
 def upload_to_gcs(file_obj, folder_name):
     if not bucket:
-        print("Error: Google Cloud Storage bucket is not initialized.")
-        return
+        logging.error("Google Cloud Storage bucket is not initialized.")
+        return None  # Return None if the bucket is not initialized
     safe_filename = secure_filename(file_obj.filename)
     unique_filename = f"{uuid.uuid4().hex}_{safe_filename}"
     blob = bucket.blob(f"{folder_name}/{unique_filename}")
     blob.upload_from_file(file_obj)
-    print(f"File {safe_filename} uploaded to {unique_filename}.")
+    logging.info(f"File {safe_filename} uploaded to {unique_filename}.")
+    return unique_filename  # Return the URL to the uploaded file
 
 @app.route('/api/endpoint', methods=['POST'])
 def handle_submission():
-    print(request.files.keys())
+    logging.info("Handling submission endpoint.")
+    file_urls = {}  # Initialize a dictionary to store URLs of the uploaded files
+    
     try:
         file_mappings = {
             'audioFile': 'audio',
@@ -80,34 +87,48 @@ def handle_submission():
 
         for field, folder in file_mappings.items():
             if field in request.files:
-                for uploaded_file in request.files.getlist(field):  # This helps in case of multiple files like audio
-                    print(f"Handling {field}...")
-                    upload_to_gcs(uploaded_file, folder)
+                for uploaded_file in request.files.getlist(field):
+                    logging.debug(f"Handling {field}...")
+                    url = upload_to_gcs(uploaded_file, folder)
+                    if url:
+                        file_urls[field] = url
 
 
         # Store song metadata in the database
         song_title = request.form.get('songTitle')
         artist_name = request.form.get('artistName')
         release_date = datetime.strptime(request.form.get('releaseDate'), '%Y-%m-%d').date()
-        genre = request.form.get('genre')
-        sub_genre = request.form.get('subGenre')
-        song_type = request.form.get('songType')
+        label_copy_text = request.form.get('labelCopyText')
+        release_instructions = request.form.get('releaseInstructions')
+        is_album = request.form.get('isAlbum').lower() == 'true'
+        album_order = int(request.form.get('albumOrder')) if request.form.get('albumOrder') else None
+        algo_support_acknowledged = request.form.get('algoSupportAcknowledged').lower() == 'true'
+        rush_fee_approved = request.form.get('rushFeeApproved').lower() == 'true'
 
-        song = Song(
+        release = Release(
             song_title=song_title,
             artist_name=artist_name,
             release_date=release_date,
-            genre=genre,
-            sub_genre=sub_genre,
-            song_type=song_type
+            label_copy_text=label_copy_text,
+            release_instructions=release_instructions,
+            is_album=is_album,
+            album_order=album_order,
+            algo_support_acknowledged=algo_support_acknowledged,
+            rush_fee_approved=rush_fee_approved
         )
-        db.session.add(song)
+        db.session.add(release)
         db.session.commit()
 
-        # After processing the data:
+        for field_type, url in file_urls.items():
+            file_entry = File(release_id=release.id, file_type=field_type, file_reference=url)
+            db.session.add(file_entry)
+        db.session.commit()
+
+        logging.info("Submission endpoint processed successfully.")
         return jsonify({"message": "Data received and stored successfully!"})
+    
     except Exception as e:
-        print(str(e))
+        logging.error(str(e))
         return jsonify({"message": f"Error: {str(e)}"}), 400
 
 if __name__ == '__main__':
