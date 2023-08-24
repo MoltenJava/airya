@@ -100,10 +100,17 @@ def handle_submission():
         release_date = datetime.strptime(request.form.get('releaseDate'), '%Y-%m-%d').date()
         label_copy_text = request.form.get('labelCopyText')
         release_instructions = request.form.get('releaseInstructions')
-        is_album = request.form.get('isAlbum').lower() == 'true'
+        is_album_raw = request.form.get('isAlbum')
+        is_album = is_album_raw.lower() == 'true' if is_album_raw else False
+
+        algo_support_acknowledged_raw = request.form.get('algoSupportAcknowledged')
+        algo_support_acknowledged = algo_support_acknowledged_raw.lower() == 'true' if algo_support_acknowledged_raw else False
+
+        rush_fee_approved_raw = request.form.get('rushFeeApproved')
+        rush_fee_approved = rush_fee_approved_raw.lower() == 'true' if rush_fee_approved_raw else False
+
         album_order = int(request.form.get('albumOrder')) if request.form.get('albumOrder') else None
-        algo_support_acknowledged = request.form.get('algoSupportAcknowledged').lower() == 'true'
-        rush_fee_approved = request.form.get('rushFeeApproved').lower() == 'true'
+
 
         release = Release(
             song_title=song_title,
