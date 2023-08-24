@@ -19,7 +19,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Configuring database connection
-DATABASE_URL = os.environ['DATABASE_URL']
+DATABASE_URL = os.environ.get('DATABASE_URL', 'postgres://iimrnohstkeenh:e01ff5f9a67eed42688496cf906a09a67d5a38ea1de9a94e8ea6e8f2b4e58b5f@ec2-3-217-146-37.compute-1.amazonaws.com:5432/df0s4u8p1qn2s4')
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
