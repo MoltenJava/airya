@@ -178,7 +178,7 @@ def handle_submission():
 
     def extract_gcs_path(gcs_url):
         """Utility function to extract the path part from the full GCS URL"""
-        return gcs_url.split('https://storage.googleapis.com/', 1)[-1]
+        return gcs_url.split('https://storage.googleapis.com/airya_bucket/', 1)[-1]
 
     try:
         # Store song metadata in the database
