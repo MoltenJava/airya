@@ -46,6 +46,7 @@ class Release(db.Model):
     is_album = db.Column(db.Boolean, default=False)  # Is Album
     algo_support_acknowledged = db.Column(db.Boolean, default=False)  # Algorithm Support Acknowledged
     rush_fee_approved = db.Column(db.Boolean, default=False)  # Rush Fee Approved
+    created = db.Column(db.DateTime, default=datetime.utcnow)
 
 class File(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -104,9 +105,6 @@ def generate_gcs_signed_url(file_type, expiry_time=3600):
         return None
 
 
-    
-    
-
 @app.route('/api/projects', methods=['GET'])
 def get_all_projects():
     projects = Release.query.all()
@@ -127,7 +125,13 @@ def get_project_details(project_id):
         return jsonify({"error": "Project not found"}), 404
 
     files = File.query.filter_by(release_id=project.id).all()
-    file_data = {file.file_type: generate_gcs_signed_url(file.file_reference) for file in files}
+    file_data = [
+    {
+        "file_type": file.file_type,
+        "url": generate_gcs_signed_url(file.file_reference)
+    }
+    for file in files
+]
     
     response = {
         "title": project.song_title,
@@ -191,14 +195,30 @@ def handle_submission():
         db.session.add(release)
         db.session.commit()
 
-        # This assumes that the client sends back the GCS file paths after uploading using the signed URLs
-        for field_type in ['labelCopyPDFUrl', 'artworkUrl', 'audioUrl_0', 'dolbyAudioUrl_0']:
-            logging.info(f"Checking field: {field_type}")
+        # Handle the labelCopyPDF and artwork files
+        for field_type in ['labelCopyPDFUrl', 'artworkUrl']:
             if gcs_path := request.form.get(field_type):
-                logging.info(f"Processing field {field_type} with value {gcs_path}")
                 file_entry = File(release_id=release.id, file_type=field_type, gcs_path=gcs_path)
                 db.session.add(file_entry)
+
+        # Handle multiple audio files
+        audio_count = 0
+        while request.form.get(f'audioUrl_{audio_count}'):
+            gcs_path = request.form.get(f'audioUrl_{audio_count}')
+            file_entry = File(release_id=release.id, file_type=f'audioUrl_{audio_count}', gcs_path=gcs_path)
+            db.session.add(file_entry)
+            audio_count += 1
+
+        # Handle multiple Dolby audio files
+        dolby_count = 0
+        while request.form.get(f'dolbyAudioUrl_{dolby_count}'):
+            gcs_path = request.form.get(f'dolbyAudioUrl_{dolby_count}')
+            file_entry = File(release_id=release.id, file_type=f'dolbyAudioUrl_{dolby_count}', gcs_path=gcs_path)
+            db.session.add(file_entry)
+            dolby_count += 1
+
         db.session.commit()
+
 
         logging.info("Submission endpoint processed successfully.")
         return jsonify({"message": "Data received and stored successfully!"})
