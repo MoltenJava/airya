@@ -124,14 +124,23 @@ def get_project_details(project_id):
         return jsonify({"error": "Project not found"}), 404
 
     files = File.query.filter_by(release_id=project.id).all()
-    file_data = [
-    {
-        "file_type": file.file_type,
-        "url": generate_gcs_signed_url(file.gcs_path)
-    }
-    for file in files
-]
     
+    file_data = []
+    for file in files:
+        blob = bucket.blob(file.gcs_path)
+        try:
+            signed_url = blob.generate_signed_url(version="v4", expiration=3600, method="GET")
+            file_data.append({
+                "file_type": file.file_type,
+                "url": signed_url
+            })
+        except Exception as e:
+            logging.error(f"Error generating signed URL for {file.gcs_path}: {str(e)}")
+            file_data.append({
+                "file_type": file.file_type,
+                "url": None
+            })
+
     response = {
         "title": project.song_title,
         "artist_name": project.artist_name,
@@ -141,6 +150,7 @@ def get_project_details(project_id):
         "files": file_data
     }
     return jsonify(response)
+
 
 @app.route('/api/get-signed-url', methods=['GET'])
 def get_signed_url():
@@ -164,6 +174,10 @@ def get_signed_url():
 @app.route('/api/endpoint', methods=['POST'])
 def handle_submission():
     logging.info("Handling submission endpoint.")
+
+    def extract_gcs_path(gcs_url):
+        """Utility function to extract the path part from the full GCS URL"""
+        return gcs_url.split('https://storage.googleapis.com/', 1)[-1]
 
     try:
         # Store song metadata in the database
@@ -196,22 +210,23 @@ def handle_submission():
 
         # Handle the labelCopyPDF and artwork files
         for field_type in ['labelCopyPDFUrl', 'artworkUrl']:
-            if gcs_path := request.form.get(field_type):
+            if gcs_url := request.form.get(field_type):
+                gcs_path = extract_gcs_path(gcs_url)
                 file_entry = File(release_id=release.id, file_type=field_type, gcs_path=gcs_path)
                 db.session.add(file_entry)
 
         # Handle multiple audio files
         audio_count = 0
-        while request.form.get(f'audioUrl_{audio_count}'):
-            gcs_path = request.form.get(f'audioUrl_{audio_count}')
+        while (gcs_url := request.form.get(f'audioUrl_{audio_count}')):
+            gcs_path = extract_gcs_path(gcs_url)
             file_entry = File(release_id=release.id, file_type=f'audioUrl_{audio_count}', gcs_path=gcs_path)
             db.session.add(file_entry)
             audio_count += 1
 
         # Handle multiple Dolby audio files
         dolby_count = 0
-        while request.form.get(f'dolbyAudioUrl_{dolby_count}'):
-            gcs_path = request.form.get(f'dolbyAudioUrl_{dolby_count}')
+        while (gcs_url := request.form.get(f'dolbyAudioUrl_{dolby_count}')):
+            gcs_path = extract_gcs_path(gcs_url)
             file_entry = File(release_id=release.id, file_type=f'dolbyAudioUrl_{dolby_count}', gcs_path=gcs_path)
             db.session.add(file_entry)
             dolby_count += 1
