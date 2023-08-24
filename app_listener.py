@@ -14,9 +14,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Configuring database connection
-DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///fallback.db')
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+DATABASE_URL = os.environ['DATABASE_URL']
 
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -109,9 +107,6 @@ def handle_submission():
     except Exception as e:
         print(str(e))
         return jsonify({"message": f"Error: {str(e)}"}), 400
-
-with app.app_context():
-    db.create_all()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
