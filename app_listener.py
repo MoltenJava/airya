@@ -10,6 +10,7 @@ from sqlalchemy import MetaData
 from datetime import datetime
 from flask_migrate import Migrate
 import logging
+import io
 from google.cloud.storage.blob import Blob
 
 
@@ -64,26 +65,49 @@ if creds_info:
     bucket = storage_client.bucket("airya_bucket")
 
 def upload_to_gcs(file_obj, folder_name):
+    logging.debug("Entering upload_to_gcs function.")
     if not bucket:
         logging.error("Google Cloud Storage bucket is not initialized.")
         return None  # Return None if the bucket is not initialized
+    
+    # Check if file_obj is the correct type
+    if not isinstance(file_obj, io.IOBase):
+        logging.error(f"Provided file object is not a file: {type(file_obj)}")
+        return None
+
     safe_filename = secure_filename(file_obj.filename)
+    
+    # Check if the secured filename is not empty or None
+    if not safe_filename:
+        logging.error(f"Secured filename is empty or None for original filename: {file_obj.filename}")
+        return None
+
     unique_filename = f"{uuid.uuid4().hex}_{safe_filename}"
-    blob = bucket.blob(f"{folder_name}/{unique_filename}")
+    blob_path = f"{folder_name}/{unique_filename}"
+    logging.debug(f"Constructed blob path: {blob_path}")
+
+    blob = bucket.blob(blob_path)
     blob.upload_from_file(file_obj)
-    logging.info(f"File {safe_filename} uploaded to {unique_filename}.")
-    return f"{folder_name}/{unique_filename}"
+
+    logging.info(f"File {safe_filename} uploaded to {blob_path}.")
+    return blob_path
 
 def generate_gcs_signed_url(file_reference, expiry_time=3600):
-    """
-    Generate a signed URL for Google Cloud Storage object.
-    """
+    logging.debug(f"Generating signed URL for: {file_reference}")
+    
     if not bucket:
         logging.error("Google Cloud Storage bucket is not initialized.")
         return None
+    
     blob = Blob(file_reference, bucket)
-    url = blob.generate_signed_url(expiration=expiry_time, method='GET')
-    return url
+    
+    try:
+        url = blob.generate_signed_url(expiration=expiry_time, method='GET')
+        logging.debug(f"Generated signed URL: {url}")
+        return url
+    except Exception as e:
+        logging.error(f"Error generating signed URL for {file_reference}: {str(e)}")
+        return None
 
 @app.route('/api/projects', methods=['GET'])
 def get_all_projects():
@@ -134,6 +158,8 @@ def handle_submission():
             if field in request.files:
                 for uploaded_file in request.files.getlist(field):
                     logging.debug(f"Handling {field}...")
+                    file_info = f"Filename: {uploaded_file.filename}, Content-Type: {uploaded_file.content_type}"
+                    logging.debug(file_info)
                     url = upload_to_gcs(uploaded_file, folder)
                     if url:
                         file_urls[field] = url
@@ -177,9 +203,9 @@ def handle_submission():
         return jsonify({"message": "Data received and stored successfully!"})
     
     except Exception as e:
-        logging.error(str(e))
+        logging.error(f"Unexpected error in handle_submission: {str(e)}")
         return jsonify({"message": f"Error: {str(e)}"}), 400
-
+    
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
     app.run(host='0.0.0.0', port=port)

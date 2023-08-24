@@ -149,10 +149,10 @@ const UploadForm = () => {
         setLoading(false);
         setSuccess(true);
     } catch (error) {
-        console.error("There was an error uploading the data:", error);
+        console.error("There was an error uploading the data:", error.message);
         setLoading(false);
         setSuccess(false);
-        alert("There was an error uploading the data.");
+        alert(`There was an error uploading the data: ${error.message}`);
     }
 };
 
