@@ -75,6 +75,10 @@ def generate_gcs_signed_url(file_type, expiry_time=3600):
 
     # Define folder structure and expected file extensions mapping
     folder_mapping = {
+        'labelCopyPDFUrl': {'folder': 'pdf', 'extension': '.pdf'},
+        'artworkUrl': {'folder': 'artwork', 'extension': '.tif'},
+        'audioUrl': {'folder': 'audio', 'extension': '.wav'},
+        'dolbyAudioUrl': {'folder': 'dolby', 'extension': '.wav'},
         'labelCopyPDF': {'folder': 'pdf', 'extension': '.pdf'},
         'artwork': {'folder': 'artwork', 'extension': '.tif'},
         'audio': {'folder': 'audio', 'extension': '.wav'},
@@ -188,8 +192,10 @@ def handle_submission():
         db.session.commit()
 
         # This assumes that the client sends back the GCS file paths after uploading using the signed URLs
-        for field_type in ['labelCopyPDFUrl', 'artworkUrl', 'audioUrl_0', 'dolbyAudioUrl_0']:  # Add more if needed
+        for field_type in ['labelCopyPDFUrl', 'artworkUrl', 'audioUrl_0', 'dolbyAudioUrl_0']:
+            logging.info(f"Checking field: {field_type}")
             if gcs_path := request.form.get(field_type):
+                logging.info(f"Processing field {field_type} with value {gcs_path}")
                 file_entry = File(release_id=release.id, file_type=field_type, gcs_path=gcs_path)
                 db.session.add(file_entry)
         db.session.commit()
