@@ -153,7 +153,7 @@ def handle_submission():
         rush_fee_approved_raw = request.form.get('rushFeeApproved')
         rush_fee_approved = rush_fee_approved_raw.lower() == 'true' if rush_fee_approved_raw else False
 
-        album_order = int(request.form.get('albumOrder')) if request.form.get('albumOrder') else None
+        
 
 
         release = Release(
