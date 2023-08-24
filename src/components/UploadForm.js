@@ -24,6 +24,22 @@ const UploadForm = () => {
     const [dolbyFileKey, setDolbyFileKey] = useState(0);
     const [algorithmSupportAcknowledged, setAlgorithmSupportAcknowledged] = useState(false);
 
+    const getSignedUrl = async (fileName, contentType) => {
+        const response = await fetch(`/api/get-signed-url?filename=${fileName}&contentType=${contentType}`);
+        const data = await response.json();
+        return data.signedUrl;
+    }
+
+    const uploadToGCS = async (signedUrl, file) => {
+        const response = await fetch(signedUrl, {
+            method: 'PUT',
+            body: file,
+            headers: {
+                'Content-Type': file.type
+            }
+        });
+        return response.ok;
+    }
 
     // New state declarations for album functionality
     const [isAlbum, setIsAlbum] = useState(false);
@@ -47,64 +63,99 @@ const UploadForm = () => {
 
 
     const handleFormSubmit = async (event) => {
-        event.preventDefault();
-        const form = event.currentTarget;
+    event.preventDefault();
+    const form = event.currentTarget;
 
-        const dateDiff = new Date(releaseDate) - new Date();
-        if (dateDiff <= 5 * 24 * 60 * 60 * 1000 && !rushFeeApproved) {
-            alert("Please approve the RUSH FEE as the release date is less than 5 days away!");
-            return;
-        }
+    const dateDiff = new Date(releaseDate) - new Date();
+    if (dateDiff <= 5 * 24 * 60 * 60 * 1000 && !rushFeeApproved) {
+        alert("Please approve the RUSH FEE as the release date is less than 5 days away!");
+        return;
+    }
 
-        if (!form.checkValidity()) {
-            event.stopPropagation();
-            setValidated(true);
-            return;
-        }
+    if (!form.checkValidity()) {
+        event.stopPropagation();
+        setValidated(true);
+        return;
+    }
 
-        setLoading(true);
-        
-        const formData = new FormData();
-        if (isAlbum) {
-            for (let i = 0; i < audioFile.length; i++) {
-                formData.append('audioFile', audioFile[i]);
+    setLoading(true);
+
+    try {
+        // Fetch signed URL and Upload audio files directly to GCS
+        const audioUrls = [];
+        for (const file of audioFile) {
+            const signedUrl = await getSignedUrl(file.name, file.type);
+            const uploaded = await uploadToGCS(signedUrl, file);
+            if (!uploaded) {
+                throw new Error("Failed to upload audio to GCS");
             }
-        } else {
-            formData.append('audioFile', audioFile[0]);
+            audioUrls.push(signedUrl.split('?')[0]);
         }
+
+        const artworkSignedUrl = await getSignedUrl(artwork.name, artwork.type);
+        const artworkUploaded = await uploadToGCS(artworkSignedUrl, artwork);
+        if (!artworkUploaded) {
+            throw new Error("Failed to upload artwork to GCS");
+        }
+
+        const labelCopyPDFSignedUrl = await getSignedUrl(labelCopyPDF.name, labelCopyPDF.type);
+        const labelCopyPDFUploaded = await uploadToGCS(labelCopyPDFSignedUrl, labelCopyPDF);
+        if (!labelCopyPDFUploaded) {
+            throw new Error("Failed to upload label copy PDF to GCS");
+        }
+
+        let dolbyAudioUrls = [];
+        if (dolbyAudio && Array.isArray(dolbyAudio)) {
+            for (const file of dolbyAudio) {
+                const signedUrl = await getSignedUrl(file.name, file.type);
+                const uploaded = await uploadToGCS(signedUrl, file);
+                if (!uploaded) {
+                    throw new Error("Failed to upload Dolby audio to GCS");
+                }
+                dolbyAudioUrls.push(signedUrl.split('?')[0]);
+            }
+        }
+
+        // Construct formData with GCS URLs and metadata, not the file blobs
+        const formData = new FormData();
+        audioUrls.forEach((url, index) => {
+            formData.append(`audioUrl_${index}`, url);
+        });
+        formData.append('artworkUrl', artworkSignedUrl.split('?')[0]);
+        formData.append('labelCopyPDFUrl', labelCopyPDFSignedUrl.split('?')[0]);
+        dolbyAudioUrls.forEach((url, index) => {
+            formData.append(`dolbyAudioUrl_${index}`, url);
+        });
         
-        formData.append('artwork', artwork);
-        formData.append('labelCopyPDF', labelCopyPDF);
-        if (dolbyAudio) {
-            formData.append('dolbyAudio', dolbyAudio);
-        }
+        // Append the remaining metadata to the formData
         formData.append('songTitle', songTitle);
         formData.append('releaseDate', releaseDate);
         formData.append('labelCopyText', labelCopyText);
         formData.append('releaseInstructions', releaseInstructions);
         formData.append('artistName', artistName);
-        try {
-            const response = await fetch('/api/endpoint', {
-                method: 'POST',
-                body: formData,
-            });
 
-            const responseData = await response.json();
+        const response = await fetch('/api/endpoint', {
+            method: 'POST',
+            body: formData,
+        });
 
-            if (!response.ok) {
-                throw new Error(responseData.message);
-            }
+        const responseData = await response.json();
 
-            console.log(responseData.message);
-            setLoading(false);
-            setSuccess(true);
-        } catch (error) {
-            console.error("There was an error uploading the data:", error);
-            setLoading(false);
-            setSuccess(false);
-            alert("There was an error uploading the data.");
+        if (!response.ok) {
+            throw new Error(responseData.message);
         }
-    };
+
+        console.log(responseData.message);
+        setLoading(false);
+        setSuccess(true);
+    } catch (error) {
+        console.error("There was an error uploading the data:", error);
+        setLoading(false);
+        setSuccess(false);
+        alert("There was an error uploading the data.");
+    }
+};
+
 
     return (
         <Container className="mt-5 d-flex flex-column align-items-center">

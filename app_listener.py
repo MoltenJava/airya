@@ -50,6 +50,7 @@ class File(db.Model):
     release_id = db.Column(db.Integer, db.ForeignKey('release.id'), nullable=False)
     file_type = db.Column(db.String(50), nullable=False)
     file_reference = db.Column(db.String(500), nullable=False)
+    gcs_path = db.Column(db.String(500), nullable=False) 
 
 # Get the Google Credentials from the Environment Variable
 creds_info = None
@@ -71,7 +72,7 @@ def upload_to_gcs(file_obj, folder_name):
     blob = bucket.blob(f"{folder_name}/{unique_filename}")
     blob.upload_from_file(file_obj)
     logging.info(f"File {safe_filename} uploaded to {unique_filename}.")
-    return unique_filename  # Return the URL to the uploaded file
+    return f"{folder_name}/{unique_filename}"
 
 def generate_gcs_signed_url(file_reference, expiry_time=3600):
     """
