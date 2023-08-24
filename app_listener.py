@@ -141,6 +141,25 @@ def get_project_details(project_id):
     }
     return jsonify(response)
 
+@app.route('/api/get-signed-url', methods=['GET'])
+def get_signed_url():
+    try:
+        # Get the file_reference from the request's query parameters
+        file_reference = request.args.get('file_reference')
+        if not file_reference:
+            return jsonify({"error": "file_reference parameter is required"}), 400
+        
+        url = generate_gcs_signed_url(file_reference)
+        if not url:
+            return jsonify({"error": "Unable to generate signed URL"}), 500
+        
+        return jsonify({"signed_url": url})
+    
+    except Exception as e:
+        logging.error(f"Error generating signed URL: {str(e)}")
+        return jsonify({"error": "Unexpected error occurred"}), 500
+
+
 @app.route('/api/endpoint', methods=['POST'])
 def handle_submission():
     logging.info("Handling submission endpoint.")
@@ -205,6 +224,8 @@ def handle_submission():
     except Exception as e:
         logging.error(f"Unexpected error in handle_submission: {str(e)}")
         return jsonify({"message": f"Error: {str(e)}"}), 400
+    
+
     
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
