@@ -100,18 +100,16 @@ def generate_gcs_signed_url(file_reference, expiry_time=3600):
         logging.error("Google Cloud Storage bucket is not initialized.")
         return None
     
-    current_time = int(time.time())
-    expiration_timestamp = current_time + expiry_time
-
     blob = Blob(file_reference, bucket)
 
     try:
-        signed_url = blob.generate_signed_url(version="v4", expiration=expiration_timestamp, method="PUT")
+        signed_url = blob.generate_signed_url(version="v4", expiration=expiry_time, method="PUT")
         logging.debug(f"Generated signed URL: {signed_url}")
         return signed_url
     except Exception as e:
         logging.error(f"Error generating signed URL for {file_reference}: {str(e)}")
         return None
+
 
     
     
