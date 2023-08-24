@@ -24,10 +24,18 @@ const UploadForm = () => {
     const [dolbyFileKey, setDolbyFileKey] = useState(0);
     const [algorithmSupportAcknowledged, setAlgorithmSupportAcknowledged] = useState(false);
 
-    const getSignedUrl = async (file_reference, contentType) => {
-        const response = await fetch(`/api/get-signed-url?file_reference=${file_reference}&contentType=${contentType}`);
-        const data = await response.json();
+    const determineFileType = (filename) => {
+        const ext = filename.split('.').pop().toLowerCase();
+        if (['wav'].includes(ext)) return 'audio';
+        if (['tif', 'tiff'].includes(ext)) return 'artwork';
+        if (['pdf'].includes(ext)) return 'pdf';
+        return 'unknown';
+    }
 
+    const getSignedUrl = async (file_reference, contentType) => {
+        const fileType = determineFileType(file_reference);
+        const response = await fetch(`/api/get-signed-url?file_reference=${file_reference}&contentType=${contentType}&file_type=${fileType}`);
+        const data = await response.json();
         // Check if the response contains an error
         if (data.error) {
             throw new Error(data.error);
