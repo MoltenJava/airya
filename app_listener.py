@@ -79,7 +79,7 @@ def generate_gcs_signed_url(file_type, expiry_time=3600):
         'artworkUrl': {'folder': 'artwork', 'extension': '.tif'},
         'audioUrl': {'folder': 'audio', 'extension': '.wav'},
         'dolbyAudioUrl': {'folder': 'dolby', 'extension': '.wav'},
-        'labelCopyPDF': {'folder': 'pdf', 'extension': '.pdf'},
+        'pdf': {'folder': 'pdf', 'extension': '.pdf'},
         'artwork': {'folder': 'artwork', 'extension': '.tif'},
         'audio': {'folder': 'audio', 'extension': '.wav'},
         'dolbyAudio': {'folder': 'dolby', 'extension': '.wav'}
